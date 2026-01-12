@@ -81,7 +81,7 @@ export function AddItemDialog() {
               <DialogTitle>Add New Item</DialogTitle>
               <DialogDescription>
                 Enter the details for the new inventory item.
-              </d' 'DialogDescription>
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <FormField
