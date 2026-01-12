@@ -67,7 +67,7 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-4">
         <div className="text-center">
             <h1 className="text-4xl font-bold text-pink-500 flex items-center justify-center gap-2">
-                Good Morning, <Heart className="inline text-pink-400 fill-current" /> Owner <Star className="inline text-yellow-400 fill-current" />
+                Good Morning, <Heart className="inline text-pink-400 fill-current" /> LinLin <Star className="inline text-yellow-400 fill-current" />
             </h1>
         </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
