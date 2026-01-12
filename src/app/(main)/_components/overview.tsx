@@ -52,10 +52,8 @@ export function Overview({ data }: OverviewProps) {
          <Tooltip 
           cursor={false}
           content={<ChartTooltipContent 
-            formatter={(value, name, item, index, payload) => {
-              // The payload here is one of the monthlyRevenue objects
-              const monthData = payload[index];
-              return [`$${(value as number).toFixed(2)}`, `Revenue for ${monthData.name}`];
+            formatter={(value, name, item) => {
+              return [`$${(value as number).toFixed(2)}`, `Revenue for ${item.payload.name}`];
             }}
             labelClassName="font-bold"
           />}
