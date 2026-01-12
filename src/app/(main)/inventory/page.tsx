@@ -1,3 +1,4 @@
+'use client';
 import Image from 'next/image';
 import {
   Card,
@@ -7,11 +8,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getInventoryItems } from '@/lib/data';
+import { useCollection, useFirestore } from '@/firebase';
+import type { InventoryItem } from '@/lib/data';
+import { collection } from 'firebase/firestore';
 import { AddItemDialog } from './_components/add-item-dialog';
+import { useMemoFirebase } from '@/firebase/provider';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export default async function InventoryPage() {
-  const items = await getInventoryItems();
+export default function InventoryPage() {
+  const firestore = useFirestore();
+  const inventoryCollectionRef = useMemoFirebase(
+    () => collection(firestore, 'inventory_items'),
+    [firestore]
+  );
+  const { data: items, isLoading } = useCollection<InventoryItem>(inventoryCollectionRef);
 
   return (
     <div className="flex flex-col gap-4">
@@ -25,7 +35,21 @@ export default async function InventoryPage() {
         <AddItemDialog />
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {items.map((item) => (
+        {isLoading && Array.from({ length: 8 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-32 w-full rounded-md" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-6 w-3/4" />
+              <Skeleton className="mt-2 h-4 w-1/2" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-5 w-1/4" />
+            </CardFooter>
+          </Card>
+        ))}
+        {items?.map((item) => (
           <Card key={item.id}>
             <CardHeader>
               <div className="relative h-32 w-full overflow-hidden rounded-md">

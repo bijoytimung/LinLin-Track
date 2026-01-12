@@ -1,3 +1,4 @@
+'use client';
 import {
   Table,
   TableBody,
@@ -7,12 +8,31 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { getInventoryItems, getSales } from '@/lib/data';
+import { useCollection, useFirestore } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import { useMemo } from 'react';
+import type { InventoryItem, Sale, EnrichedSale } from '@/lib/data';
 import { AddSaleDialog } from './_components/add-sale-dialog';
+import { useMemoFirebase } from '@/firebase/provider';
 
-export default async function SalesPage() {
-  const sales = await getSales();
-  const inventory = await getInventoryItems();
+export default function SalesPage() {
+  const firestore = useFirestore();
+
+  const salesCollectionRef = useMemoFirebase(() => collection(firestore, 'sales_transactions'), [firestore]);
+  const inventoryCollectionRef = useMemoFirebase(() => collection(firestore, 'inventory_items'), [firestore]);
+  
+  const { data: sales, isLoading: salesLoading } = useCollection<Sale>(salesCollectionRef);
+  const { data: inventory, isLoading: inventoryLoading } = useCollection<InventoryItem>(inventoryCollectionRef);
+
+  const enrichedSales = useMemo((): EnrichedSale[] => {
+    if (!sales || !inventory) return [];
+    const inventoryMap = new Map(inventory.map(item => [item.id, item]));
+    return sales.map(sale => ({
+      ...sale,
+      item: inventoryMap.get(sale.inventoryItemId),
+      date: (sale.transactionDate as any).toDate(),
+    })).filter(sale => sale.item).sort((a,b) => b.date.getTime() - a.date.getTime());
+  }, [sales, inventory]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -23,7 +43,7 @@ export default async function SalesPage() {
             View and manage all your recorded sales.
           </p>
         </div>
-        <AddSaleDialog inventory={inventory} />
+        <AddSaleDialog inventory={inventory || []} />
       </div>
       <div className="rounded-lg border">
         <Table>
@@ -38,7 +58,12 @@ export default async function SalesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sales.map((sale) => {
+            {(salesLoading || inventoryLoading) && (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center">Loading sales...</TableCell>
+                </TableRow>
+            )}
+            {enrichedSales.map((sale) => {
               const profit =
                 sale.sellingPrice * sale.quantity -
                 sale.item.originalValue * sale.quantity;
@@ -58,7 +83,7 @@ export default async function SalesPage() {
                     ${sale.sellingPrice.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={profit >= 0 ? 'default' : 'destructive'} className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+                    <Badge variant={profit >= 0 ? 'default' : 'destructive'} className={`${profit >=0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}`}>
                       ${profit.toFixed(2)}
                     </Badge>
                   </TableCell>

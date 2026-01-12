@@ -1,8 +1,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { Sale } from '@/lib/data';
+import type { EnrichedSale } from '@/lib/data';
 
 interface RecentSalesProps {
-    sales: Sale[];
+    sales: EnrichedSale[];
 }
 
 export function RecentSales({ sales }: RecentSalesProps) {

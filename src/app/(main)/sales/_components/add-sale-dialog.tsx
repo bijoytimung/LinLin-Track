@@ -21,14 +21,109 @@ import {
 } from '@/components/ui/select';
 import type { InventoryItem } from '@/lib/data';
 import { PlusCircle } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { useFirestore } from '@/firebase';
+import { collection, doc, runTransaction } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+
+const formSchema = z.object({
+  inventoryItemId: z.string().min(1, 'Please select an item.'),
+  quantity: z.coerce.number().int().min(1, 'Quantity must be at least 1.'),
+  sellingPrice: z.coerce.number().min(0, 'Selling price must be a positive number.'),
+});
 
 interface AddSaleDialogProps {
-    inventory: InventoryItem[];
+  inventory: InventoryItem[];
 }
 
 export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
+  const [open, setOpen] = useState(false);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      inventoryItemId: '',
+      quantity: 1,
+      sellingPrice: 0,
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const itemSold = inventory.find(item => item.id === values.inventoryItemId);
+    if (!itemSold) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Selected item not found.',
+      });
+      return;
+    }
+    if (itemSold.quantity < values.quantity) {
+      form.setError('quantity', {
+        type: 'manual',
+        message: `Not enough stock. Only ${itemSold.quantity} available.`,
+      });
+      return;
+    }
+
+    try {
+      await runTransaction(firestore, async (transaction) => {
+        const itemRef = doc(firestore, 'inventory_items', values.inventoryItemId);
+        const salesCollRef = collection(firestore, 'sales_transactions');
+
+        // This read is part of the transaction
+        const itemDoc = await transaction.get(itemRef);
+        if (!itemDoc.exists()) {
+          throw new Error('Item does not exist!');
+        }
+
+        const newQuantity = itemDoc.data().quantity - values.quantity;
+        if (newQuantity < 0) {
+          throw new Error('Not enough items in stock.');
+        }
+
+        transaction.update(itemRef, { quantity: newQuantity });
+
+        const saleData = {
+          ...values,
+          transactionDate: new Date(),
+        };
+        // Firestore will generate an ID for the new document
+        transaction.set(doc(salesCollRef), saleData);
+      });
+      
+      toast({
+        title: 'Sale recorded',
+        description: 'The new sale has been successfully saved.',
+      });
+      setOpen(false);
+      form.reset();
+
+    } catch (e: any) {
+      console.error("Transaction failed: ", e);
+      toast({
+        variant: 'destructive',
+        title: 'Transaction failed',
+        description: e.message || 'Could not record the sale.',
+      });
+    }
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -36,46 +131,71 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Record New Sale</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new sale transaction.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="item" className="text-right">
-              Item
-            </Label>
-            <Select>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select an item" />
-              </SelectTrigger>
-              <SelectContent>
-                {inventory.map((item) => (
-                  <SelectItem key={item.id} value={item.id}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="quantity" className="text-right">
-              Quantity
-            </Label>
-            <Input id="quantity" type="number" placeholder="1" className="col-span-3" />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="sellingPrice" className="text-right">
-              Selling Price
-            </Label>
-            <Input id="sellingPrice" type="number" placeholder="20.00" className="col-span-3" />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button type="submit">Save Sale</Button>
-        </DialogFooter>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Record New Sale</DialogTitle>
+              <DialogDescription>
+                Enter the details for the new sale transaction.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="inventoryItemId"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Item</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="col-span-3">
+                          <SelectValue placeholder="Select an item" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {inventory.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="col-span-4" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="quantity"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Quantity</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="1" className="col-span-3" {...field} />
+                    </FormControl>
+                    <FormMessage className="col-span-4" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="sellingPrice"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Selling Price</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="20.00" className="col-span-3" {...field} />
+                    </FormControl>
+                    <FormMessage className="col-span-4" />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Save Sale</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

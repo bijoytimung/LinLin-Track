@@ -1,11 +1,11 @@
 "use client";
 
-import type { Sale } from '@/lib/data';
+import type { EnrichedSale } from '@/lib/data';
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartTooltipContent, ChartContainer, type ChartConfig } from '@/components/ui/chart';
 
 interface OverviewProps {
-  data: Sale[];
+  data: EnrichedSale[];
 }
 
 const chartConfig = {
@@ -25,8 +25,9 @@ export function Overview({ data }: OverviewProps) {
     const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
 
     data.forEach(sale => {
-        if (sale.date >= oneYearAgo) {
-            const monthIndex = sale.date.getMonth();
+        const saleDate = new Date(sale.date);
+        if (saleDate >= oneYearAgo) {
+            const monthIndex = saleDate.getMonth();
             monthlyRevenue[monthIndex].total += sale.sellingPrice * sale.quantity;
         }
     });
@@ -51,7 +52,11 @@ export function Overview({ data }: OverviewProps) {
          <Tooltip 
           cursor={false}
           content={<ChartTooltipContent 
-            formatter={(value, name) => [`$${(value as number).toFixed(2)}`, `Revenue for ${name}`]}
+            formatter={(value, name, item, index, payload) => {
+              // The payload here is one of the monthlyRevenue objects
+              const monthData = payload[index];
+              return [`$${(value as number).toFixed(2)}`, `Revenue for ${monthData.name}`];
+            }}
             labelClassName="font-bold"
           />}
         />
