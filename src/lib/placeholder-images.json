@@ -1,3 +1,34 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "item-1",
+      "description": "A stylish blue t-shirt on a hanger.",
+      "imageUrl": "https://images.unsplash.com/photo-1585032767761-878270336a0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxibHVlJTIwdC1zaGlydHxlbnwwfHx8fDE3NjgyMzE1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "blue t-shirt"
+    },
+    {
+      "id": "item-2",
+      "description": "A pair of black jeans.",
+      "imageUrl": "https://images.unsplash.com/photo-1626295077144-61f9eb15d25e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YmxhY2slMjBqZWFuc3xlbnwwfHx8fDE3NjgyMzE1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "black jeans"
+    },
+    {
+      "id": "item-3",
+      "description": "A comfortable gray hoodie.",
+      "imageUrl": "https://images.unsplash.com/photo-1626408456883-d204eb57c763?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxncmF5JTIwaG9vZGllfGVufDB8fHx8MTc2ODE0OTY5OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "gray hoodie"
+    },
+    {
+      "id": "item-4",
+      "description": "A classic white sneaker.",
+      "imageUrl": "https://images.unsplash.com/photo-1558121556-2a39fc528338?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3aGl0ZSUyMHNuZWFrZXJ8ZW58MHx8fHwxNzY4MTY0ODU0fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "white sneaker"
+    },
+    {
+      "id": "item-5",
+      "description": "A leather backpack.",
+      "imageUrl": "https://images.unsplash.com/photo-1549943872-f7ff0b2b51be?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxsZWF0aGVyJTIwYmFja3BhY2t8ZW58MHx8fHwxNzY4MjA4NzI3fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "leather backpack"
+    }
+  ]
 }
