@@ -14,7 +14,7 @@ import { useMemo, useState } from 'react';
 import type { InventoryItem, Sale, EnrichedSale } from '@/lib/data';
 import { AddSaleDialog } from './_components/add-sale-dialog';
 import { useMemoFirebase } from '@/firebase/provider';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Trash } from 'lucide-react';
 import {
   AlertDialog,
