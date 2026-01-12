@@ -74,7 +74,13 @@ export default function MainLayout({
             </nav>
         </div>
         <SidebarInset>
-          <main className="flex-1 overflow-auto p-4 lg:p-6 pb-20 md:pb-6">{children}</main>
+          <main className="flex-1 overflow-auto p-4 lg:p-6 pb-20 md:pb-6 relative">
+            <div 
+              className="absolute inset-0 bg-repeat bg-center -z-10 opacity-20" 
+              style={{backgroundImage: "url('https://storage.googleapis.com/project-spark-3c35f.appspot.com/users%2FwY4p70S4sIdS1tDQw2r3rOKg1GH3%2Fuploads%2Fb504353d-2101-4467-8547-4f40026e6c43.png')"}}
+            ></div>
+            {children}
+          </main>
         </SidebarInset>
       </AuthGate>
     </>
