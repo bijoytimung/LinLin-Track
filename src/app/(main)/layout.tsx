@@ -1,5 +1,5 @@
 import Link from 'next/link';
-
+import { Home, Package, BarChart2 } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -24,12 +24,37 @@ export default function MainLayout({
   return (
     <>
       <AuthGate>
-        <Sidebar variant="floating" collapsible="none" className="md:w-64">
+        <Sidebar variant="floating" collapsible="icon">
           <SidebarHeader>
-             {/* Header content can go here if needed */}
+            <Logo className="h-8 w-8 text-primary" />
           </SidebarHeader>
-          <SidebarContent className="p-0">
-             {/* This can be a container for the main content if sidebar is persistent */}
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Dashboard' }}>
+                  <Link href="/">
+                    <Home />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Inventory' }}>
+                  <Link href="/inventory">
+                    <Package />
+                    <span>Inventory</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Sales Reports' }}>
+                  <Link href="/sales">
+                    <BarChart2 />
+                    <span>Reports</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarContent>
         </Sidebar>
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-sidebar md:hidden">

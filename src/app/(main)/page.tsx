@@ -1,11 +1,19 @@
 'use client';
-import type { Sale, EnrichedSale } from '@/lib/data';
+import type { Sale, EnrichedSale, InventoryItem } from '@/lib/data';
 import { RecentSales } from './_components/recent-sales';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
 import { useMemo } from 'react';
 import { Heart, Star } from 'lucide-react';
+import { Overview } from './_components/overview';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -21,7 +29,7 @@ export default function DashboardPage() {
     () => collection(firestore, 'inventory_items'),
     [firestore]
   );
-  const { data: inventory, isLoading: inventoryLoading } = useCollection(inventoryCollectionRef);
+  const { data: inventory, isLoading: inventoryLoading } = useCollection<InventoryItem>(inventoryCollectionRef);
 
   const enrichedSales = useMemo((): EnrichedSale[] => {
     if (!sales || !inventory) return [];
@@ -53,39 +61,76 @@ export default function DashboardPage() {
 
   const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
-  const recentSales = enrichedSales.sort((a,b) => b.date.getTime() - a.date.getTime()).slice(0,3);
+  const recentSales = enrichedSales.sort((a,b) => b.date.getTime() - a.date.getTime()).slice(0,5);
 
   return (
-    <div className="flex flex-col gap-8 p-4 md:p-6">
+    <div className="flex flex-col gap-4">
         <div className="text-center">
             <h1 className="text-4xl font-bold text-pink-500 flex items-center justify-center gap-2">
                 Good Morning, <Heart className="inline text-pink-400 fill-current" /> Owner <Star className="inline text-yellow-400 fill-current" />
             </h1>
         </div>
-
-      <div className="relative p-6 text-center rounded-lg scroll-bg">
-        <h2 className="text-lg font-bold">Today's Profit:</h2>
-        <p className="text-5xl font-bold text-pink-600">${totalProfit.toFixed(2)}</p>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Today's Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Today's Profit
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${totalProfit.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Items Sold Today</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{itemsSoldCount}</div>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Inventory Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inventory?.length || 0}</div>
+          </CardContent>
+        </Card>
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="relative p-4 text-center rounded-lg scroll-bg-secondary">
-          <h3 className="text-md font-bold">Revenue:</h3>
-          <p className="text-3xl font-bold text-yellow-700">${totalRevenue.toFixed(2)}</p>
-        </div>
-        <div className="relative p-4 text-center rounded-lg bg-pink-100 dark:bg-pink-900/50">
-          <h3 className="text-md font-bold">Items Sold:</h3>
-          <p className="text-3xl font-bold text-pink-600">{itemsSoldCount}</p>
-        </div>
-      </div>
-      
-      <div>
-        <h2 className="text-2xl font-bold text-center mb-4">Recent Sales</h2>
-        <div className="bg-white/80 dark:bg-black/50 p-4 rounded-lg shadow-inner">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Overview</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <Overview data={enrichedSales} />
+          </CardContent>
+        </Card>
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Recent Sales</CardTitle>
+            <CardDescription>
+              You made {todaySales.length} sales today.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
             <RecentSales sales={recentSales} />
-        </div>
+          </CardContent>
+        </Card>
       </div>
-
     </div>
   );
 }
