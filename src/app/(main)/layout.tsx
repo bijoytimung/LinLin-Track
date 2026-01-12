@@ -1,9 +1,4 @@
 import Link from 'next/link';
-import {
-  Boxes,
-  LayoutDashboard,
-  ShoppingCart,
-} from 'lucide-react';
 
 import {
   Sidebar,
@@ -17,6 +12,9 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import { AuthGate } from './_components/auth-gate';
+import { HomeIcon } from '@/components/icons/home';
+import { StockIcon } from '@/components/icons/stock';
+import { ReportsIcon } from '@/components/icons/reports';
 
 export default function MainLayout({
   children,
@@ -26,50 +24,32 @@ export default function MainLayout({
   return (
     <>
       <AuthGate>
-        <Sidebar>
+        <Sidebar variant="floating" collapsible="none" className="md:w-64">
           <SidebarHeader>
-            <div className="flex items-center gap-2">
-              <Logo className="size-6 text-primary" />
-              <h1 className="text-lg font-semibold">TrackFlow</h1>
-            </div>
+             {/* Header content can go here if needed */}
           </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/">
-                    <LayoutDashboard />
-                    Dashboard
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/inventory">
-                    <Boxes />
-                    Inventory
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/sales">
-                    <ShoppingCart />
-                    Sales
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+          <SidebarContent className="p-0">
+             {/* This can be a container for the main content if sidebar is persistent */}
           </SidebarContent>
         </Sidebar>
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-sidebar md:hidden">
+            <nav className="flex justify-around">
+                <Link href="/" className="flex flex-col items-center p-2 text-foreground hover:text-primary">
+                    <HomeIcon className="h-6 w-6" />
+                    <span className="text-xs">Home</span>
+                </Link>
+                <Link href="/inventory" className="flex flex-col items-center p-2 text-foreground hover:text-primary">
+                    <StockIcon className="h-6 w-6" />
+                    <span className="text-xs">Stock</span>
+                </Link>
+                <Link href="/sales" className="flex flex-col items-center p-2 text-foreground hover:text-primary">
+                    <ReportsIcon className="h-6 w-6" />
+                    <span className="text-xs">Reports</span>
+                </Link>
+            </nav>
+        </div>
         <SidebarInset>
-          <header className="flex h-12 items-center border-b px-4 lg:h-14 lg:px-6">
-            <SidebarTrigger className="md:hidden" />
-            <div className="flex-1">
-               {/* Can add breadcrumbs or page title here */}
-            </div>
-          </header>
-          <main className="flex-1 overflow-auto p-4 lg:p-6">{children}</main>
+          <main className="flex-1 overflow-auto p-4 lg:p-6 pb-20 md:pb-6">{children}</main>
         </SidebarInset>
       </AuthGate>
     </>

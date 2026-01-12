@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { EnrichedSale } from '@/lib/data';
 
 interface RecentSalesProps {
@@ -7,19 +6,12 @@ interface RecentSalesProps {
 
 export function RecentSales({ sales }: RecentSalesProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-2">
       {sales.map(sale => (
-        <div className="flex items-center" key={sale.id}>
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={sale.item.imageUrl} alt={sale.item.name} data-ai-hint={sale.item.imageHint} />
-            <AvatarFallback>{sale.item.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div className="ml-4 space-y-1">
-            <p className="text-sm font-medium leading-none">{sale.item.name}</p>
-            <p className="text-sm text-muted-foreground">{sale.date.toLocaleDateString()}</p>
-          </div>
-          <div className="ml-auto font-medium">
-            +${(sale.sellingPrice * sale.quantity).toLocaleString('en-US')}
+        <div className="flex items-center justify-between border-b-2 border-dashed border-pink-200 dark:border-pink-800 py-2" key={sale.id}>
+          <p className="text-lg font-bold">{sale.item.name}</p>
+          <div className="font-bold text-lg">
+            - ${(sale.sellingPrice * sale.quantity).toLocaleString('en-US', {minimumFractionDigits: 2})}
           </div>
         </div>
       ))}

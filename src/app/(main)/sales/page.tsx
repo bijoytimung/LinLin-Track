@@ -38,14 +38,14 @@ export default function SalesPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Sales</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">
             View and manage all your recorded sales.
           </p>
         </div>
         <AddSaleDialog inventory={inventory || []} />
       </div>
-      <div className="rounded-lg border">
+      <div className="rounded-lg border bg-white/80 dark:bg-black/50">
         <Table>
           <TableHeader>
             <TableRow>
