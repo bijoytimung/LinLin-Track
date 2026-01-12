@@ -1,0 +1,269 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "InventoryItem",
+      "type": "object",
+      "description": "Represents an item in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the inventory item."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the inventory item."
+        },
+        "originalValue": {
+          "type": "number",
+          "description": "Original value (cost) of the item."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "Quantity of the item currently in stock."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "originalValue",
+        "quantity"
+      ]
+    },
+    "SaleTransaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SaleTransaction",
+      "type": "object",
+      "description": "Represents a single sale transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sale transaction."
+        },
+        "inventoryItemId": {
+          "type": "string",
+          "description": "Reference to the InventoryItem sold in this transaction. (Relationship: InventoryItem 1:N SaleTransaction)"
+        },
+        "sellingPrice": {
+          "type": "number",
+          "description": "Actual selling price of the item in this transaction."
+        },
+        "transactionDate": {
+          "type": "string",
+          "description": "Date and time of the sale transaction.",
+          "format": "date-time"
+        },
+        "quantitySold": {
+          "type": "number",
+          "description": "Quantity of items sold in the transaction"
+        }
+      },
+      "required": [
+        "id",
+        "inventoryItemId",
+        "sellingPrice",
+        "transactionDate",
+        "quantitySold"
+      ]
+    },
+    "DailySummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "DailySummary",
+      "type": "object",
+      "description": "Represents a summary of sales and earnings for a specific day.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the daily summary."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date for which the summary is calculated.",
+          "format": "date"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "description": "Total revenue generated on this day."
+        },
+        "totalCostOfGoodsSold": {
+          "type": "number",
+          "description": "Total original value of items sold on this day."
+        },
+        "totalProfit": {
+          "type": "number",
+          "description": "Total profit made on this day."
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "totalRevenue",
+        "totalCostOfGoodsSold",
+        "totalProfit"
+      ]
+    },
+    "MonthlySummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "MonthlySummary",
+      "type": "object",
+      "description": "Represents a summary of sales and earnings for a specific month.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the monthly summary."
+        },
+        "month": {
+          "type": "string",
+          "description": "Month for which the summary is calculated. (YYYY-MM)",
+          "format": "string"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "description": "Total revenue generated during this month."
+        },
+        "totalCostOfGoodsSold": {
+          "type": "number",
+          "description": "Total original value of items sold during this month."
+        },
+        "totalProfit": {
+          "type": "number",
+          "description": "Total profit made during this month."
+        }
+      },
+      "required": [
+        "id",
+        "month",
+        "totalRevenue",
+        "totalCostOfGoodsSold",
+        "totalProfit"
+      ]
+    },
+    "AnnualSummary": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AnnualSummary",
+      "type": "object",
+      "description": "Represents a summary of sales and earnings for a specific year.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the annual summary."
+        },
+        "year": {
+          "type": "string",
+          "description": "Year for which the summary is calculated. (YYYY)",
+          "format": "string"
+        },
+        "totalRevenue": {
+          "type": "number",
+          "description": "Total revenue generated during this year."
+        },
+        "totalCostOfGoodsSold": {
+          "type": "number",
+          "description": "Total original value of items sold during this year."
+        },
+        "totalProfit": {
+          "type": "number",
+          "description": "Total profit made during this year."
+        }
+      },
+      "required": [
+        "id",
+        "year",
+        "totalRevenue",
+        "totalCostOfGoodsSold",
+        "totalProfit"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/inventory_items/{inventoryItemId}",
+        "definition": {
+          "entityName": "InventoryItem",
+          "schema": {
+            "$ref": "#/backend/entities/InventoryItem"
+          },
+          "description": "Stores inventory items. No concept of ownership exists.",
+          "params": [
+            {
+              "name": "inventoryItemId",
+              "description": "Unique identifier for the inventory item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales_transactions/{saleTransactionId}",
+        "definition": {
+          "entityName": "SaleTransaction",
+          "schema": {
+            "$ref": "#/backend/entities/SaleTransaction"
+          },
+          "description": "Stores sale transactions associated with inventory items. No concept of ownership exists.",
+          "params": [
+            {
+              "name": "saleTransactionId",
+              "description": "Unique identifier for the sale transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/daily_summaries/{dailySummaryId}",
+        "definition": {
+          "entityName": "DailySummary",
+          "schema": {
+            "$ref": "#/backend/entities/DailySummary"
+          },
+          "description": "Stores daily summaries of sales and earnings. No concept of ownership exists.",
+          "params": [
+            {
+              "name": "dailySummaryId",
+              "description": "Unique identifier for the daily summary."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/monthly_summaries/{monthlySummaryId}",
+        "definition": {
+          "entityName": "MonthlySummary",
+          "schema": {
+            "$ref": "#/backend/entities/MonthlySummary"
+          },
+          "description": "Stores monthly summaries of sales and earnings. No concept of ownership exists.",
+          "params": [
+            {
+              "name": "monthlySummaryId",
+              "description": "Unique identifier for the monthly summary."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/annual_summaries/{annualSummaryId}",
+        "definition": {
+          "entityName": "AnnualSummary",
+          "schema": {
+            "$ref": "#/backend/entities/AnnualSummary"
+          },
+          "description": "Stores annual summaries of sales and earnings. No concept of ownership exists.",
+          "params": [
+            {
+              "name": "annualSummaryId",
+              "description": "Unique identifier for the annual summary."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to store inventory, sales transactions, and summaries (daily, monthly, and annually). It prioritizes simplicity and leverages path-based ownership for user-specific data to streamline security rules.  The structure is designed to provide atomic operations. \n\n*   `/inventory_items/{inventoryItemId}`: Stores inventory items. All inventory items share the same security posture (homogenous). There is no concept of ownership. \n*   `/sales_transactions/{saleTransactionId}`: Stores sale transactions, associating each transaction with an inventory item. No concept of ownership exists.\n*   `/daily_summaries/{dailySummaryId}`: Stores the daily revenue, profit, and cost information. No concept of ownership exists.\n*   `/monthly_summaries/{monthlySummaryId}`: Stores monthly summaries in the same format as the daily summaries.  No concept of ownership exists.\n*   `/annual_summaries/{annualSummaryId}`: Stores annual summaries. No concept of ownership exists.\n\nThis structure achieves Authorization Independence as there are no cross-document `get()` operations required for security rules. Each collection stands alone, simplifying the authorization logic and enabling atomic operations.  All collections have the same security posture and there is no concept of ownership."
+  }
+}

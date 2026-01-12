@@ -1,0 +1,108 @@
+/**
+ * Core Philosophy: This ruleset enforces a simple, uniform security model where all data access (read and write) is granted to any authenticated user, regardless of their specific identity. The system is designed for trusted users within a single operational context. There is no concept of individual data ownership; all data is treated as a shared resource for authenticated participants.
+ *
+ * Data Structure: The data is organized into five flat, top-level collections: `inventory_items`, `sales_transactions`, `daily_summaries`, `monthly_summaries`, and `annual_summaries`. There are no user-specific collections or subcollections. This structure simplifies queries and rules by avoiding nested data paths.
+ *
+ * Key Security Decisions:
+ * - Uniform Authenticated Access: The primary security requirement is that a user must be signed in to perform any operation. Anonymous sign-in is enabled, providing a low-friction way to get an authenticated session.
+ * - No Data Ownership: Unlike typical multi-user applications, these rules do not enforce document ownership. Any authenticated user can create, read, update, or delete any document in any collection. This is a deliberate choice for an internal or single-purpose application where all users are trusted operators.
+ * - Default Deny: Access is implicitly denied for any request that does not come from an authenticated user.
+ *
+ * Denormalization for Authorization: This principle is not applicable to this ruleset, as the security model does not rely on ownership or relational data for authorization checks. All decisions are based solely on the user's authentication status.
+ *
+ * Structural Segregation: This principle is not applicable, as there is no distinction between private and public data in this model. All data shares the same security posture.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     * This is the cornerstone of the security model.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Ensures that a document exists before an update or delete operation.
+     * Prevents writes to non-existent paths, which is a security best practice.
+     */
+    function documentExists() {
+      return resource != null;
+    }
+
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to inventory items. Any authenticated user can manage the inventory.
+     * @path /inventory_items/{inventoryItemId}
+     * @allow (create) An authenticated user can create a new inventory item document.
+     * @deny (get) An unauthenticated user (request.auth == null) is denied read access.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /inventory_items/{inventoryItemId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+
+    /**
+     * @description Controls access to sales transactions. Any authenticated user can log sales.
+     * @path /sales_transactions/{saleTransactionId}
+     * @allow (create) An authenticated user can create a new sales transaction document.
+     * @deny (update) An unauthenticated user (request.auth == null) is denied write access.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /sales_transactions/{saleTransactionId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+
+    /**
+     * @description Controls access to daily sales summaries. Any authenticated user can manage summaries.
+     * @path /daily_summaries/{dailySummaryId}
+     * @allow (get) An authenticated user can read a daily summary document.
+     * @deny (delete) An unauthenticated user (request.auth == null) is denied delete access.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /daily_summaries/{dailySummaryId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+
+    /**
+     * @description Controls access to monthly sales summaries. Any authenticated user can manage summaries.
+     * @path /monthly_summaries/{monthlySummaryId}
+     * @allow (list) An authenticated user can list all monthly summary documents.
+     * @deny (create) An unauthenticated user (request.auth == null) is denied write access.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /monthly_summaries/{monthlySummaryId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+
+    /**
+     * @description Controls access to annual sales summaries. Any authenticated user can manage summaries.
+     * @path /annual_summaries/{annualSummaryId}
+     * @allow (update) An authenticated user can update an existing annual summary document.
+     * @deny (list) An unauthenticated user (request.auth == null) is denied read access.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /annual_summaries/{annualSummaryId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+  }
+}
