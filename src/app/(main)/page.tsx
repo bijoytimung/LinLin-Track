@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
   const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
-  const recentSales = enrichedSales.sort((a,b) => b.date.getTime() - a.date.getTime()).slice(0,5);
+  const recentSalesToday = todaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
 
   return (
     <div className="flex flex-col gap-4">
@@ -121,13 +121,13 @@ export default function DashboardPage() {
         </Card>
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Recent Sales</CardTitle>
+            <CardTitle>Today's Sales</CardTitle>
             <CardDescription>
-              You made {todaySales.length} sales today.
+              You've made {todaySales.length} sales today.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSales sales={recentSales} />
+            <RecentSales sales={recentSalesToday} />
           </CardContent>
         </Card>
       </div>

@@ -6,6 +6,13 @@ interface RecentSalesProps {
 }
 
 export function RecentSales({ sales }: RecentSalesProps) {
+  if (sales.length === 0) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">No sales recorded today.</p>
+        </div>
+    )
+  }
   return (
     <div className="space-y-4">
       {sales.map((sale) => (
