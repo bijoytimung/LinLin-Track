@@ -1,12 +1,19 @@
 "use client";
 
 import type { Sale } from '@/lib/data';
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
-import { ChartTooltipContent } from '@/components/ui/chart';
+import { Bar, BarChart, XAxis, YAxis, Tooltip } from 'recharts';
+import { ChartTooltipContent, ChartContainer, type ChartConfig } from '@/components/ui/chart';
 
 interface OverviewProps {
   data: Sale[];
 }
+
+const chartConfig = {
+  total: {
+    label: "Total",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
 
 export function Overview({ data }: OverviewProps) {
     const monthlyRevenue = Array.from({ length: 12 }, (_, i) => {
@@ -25,8 +32,8 @@ export function Overview({ data }: OverviewProps) {
     });
 
   return (
-    <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={monthlyRevenue}>
+    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+      <BarChart accessibilityLayer data={monthlyRevenue}>
         <XAxis
           dataKey="name"
           stroke="hsl(var(--muted-foreground))"
@@ -48,8 +55,8 @@ export function Overview({ data }: OverviewProps) {
             labelClassName="font-bold"
           />}
         />
-        <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
       </BarChart>
-    </ResponsiveContainer>
+    </ChartContainer>
   );
 }
