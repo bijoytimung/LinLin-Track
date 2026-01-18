@@ -59,19 +59,6 @@ export default function DashboardPage() {
     return acc + (revenue - cost);
   }, 0);
   
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  const monthlyRevenue = enrichedSales
-    .filter(sale => {
-      const saleDate = new Date(sale.date);
-      return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
-    })
-    .reduce((acc, sale) => acc + sale.sellingPrice * sale.quantity, 0);
-
-  const overallRevenue = enrichedSales.reduce((acc, sale) => {
-    return acc + sale.sellingPrice * sale.quantity;
-  }, 0);
-
   const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
   const recentSalesToday = todaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
@@ -83,7 +70,7 @@ export default function DashboardPage() {
                 Good Morning, <Heart className="inline text-pink-400 fill-current" /> LinLin <Star className="inline text-yellow-400 fill-current" />
             </h1>
         </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -92,26 +79,6 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹{todayRevenue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              This Month's Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{monthlyRevenue.toFixed(2)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Overall Revenue
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹{overallRevenue.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
