@@ -59,12 +59,9 @@ export default function DashboardPage() {
     return acc + (revenue - cost);
   }, 0);
   
-  const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
+  const todayCapital = todayRevenue - todayProfit;
 
-  const totalCapital = useMemo(() => {
-    if (!inventory) return 0;
-    return inventory.reduce((acc, item) => acc + item.originalValue * item.quantity, 0);
-  }, [inventory]);
+  const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
   const recentSalesToday = todaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
 
@@ -103,7 +100,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{totalCapital.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{todayCapital.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
