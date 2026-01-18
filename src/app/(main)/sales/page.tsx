@@ -36,7 +36,7 @@ export default function SalesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [saleToDelete, setSaleToDelete] = useState<EnrichedSale | null>(null);
-  const [filterDate, setFilterDate] = useState<Date | undefined>();
+  const [filterDate, setFilterDate] = useState<Date | undefined>(new Date());
 
   const salesCollectionRef = useMemoFirebase(() => collection(firestore, 'sales_transactions'), [firestore]);
   const inventoryCollectionRef = useMemoFirebase(() => collection(firestore, 'inventory_items'), [firestore]);
@@ -113,7 +113,7 @@ export default function SalesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
           <p className="text-muted-foreground">
-            View and manage all your recorded sales.
+            {filterDate ? `Viewing sales for ${format(filterDate, "PPP")}.` : 'Viewing all recorded sales.'}
           </p>
         </div>
         <div className="flex items-center gap-4">
@@ -127,7 +127,7 @@ export default function SalesPage() {
                     )}
                     >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filterDate ? format(filterDate, "PPP") : <span>Filter by date...</span>}
+                    {filterDate ? format(filterDate, "PPP") : <span>All Sales</span>}
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
