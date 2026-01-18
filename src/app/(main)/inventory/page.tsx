@@ -18,7 +18,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { seedData } from '@/lib/seed-data';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash } from 'lucide-react';
+import { Trash, Pencil } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,8 +28,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { EditItemDialog } from './_components/edit-item-dialog';
 
 
 export default function InventoryPage() {
@@ -37,6 +37,7 @@ export default function InventoryPage() {
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<InventoryItem | null>(null);
 
   const inventoryCollectionRef = useMemoFirebase(
     () => collection(firestore, 'inventory_items'),
@@ -164,38 +165,24 @@ export default function InventoryPage() {
                   className="object-cover"
                   data-ai-hint={item.imageHint}
                 />
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                        <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 z-10 h-7 w-7 opacity-80 hover:opacity-100"
-                            onClick={() => setItemToDelete(item)}
-                        >
-                            <Trash className="h-4 w-4" />
-                        </Button>
-                    </AlertDialogTrigger>
-                    {itemToDelete?.id === item.id && (
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the item
-                                "{itemToDelete.name}". Associated sales records will remain but may no longer display correctly.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                onClick={handleDeleteItem}
-                                className={buttonVariants({ variant: 'destructive' })}
-                                >
-                                Delete
-                                </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    )}
-                </AlertDialog>
+                 <div className="absolute top-2 right-2 z-10 flex gap-2">
+                    <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-7 w-7 opacity-80 hover:opacity-100"
+                        onClick={() => setItemToEdit(item)}
+                    >
+                        <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-7 w-7 opacity-80 hover:opacity-100"
+                        onClick={() => setItemToDelete(item)}
+                    >
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                 </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -218,6 +205,41 @@ export default function InventoryPage() {
             </div>
         )}
       </div>
+      
+      {itemToEdit && (
+        <EditItemDialog
+          item={itemToEdit}
+          open={!!itemToEdit}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) {
+              setItemToEdit(null);
+            }
+          }}
+        />
+      )}
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(isOpen) => !isOpen && setItemToDelete(null)}>
+        {itemToDelete && (
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the item
+                    "{itemToDelete.name}". Associated sales records will remain but may no longer display correctly.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                    onClick={handleDeleteItem}
+                    className={buttonVariants({ variant: 'destructive' })}
+                    >
+                    Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        )}
+      </AlertDialog>
     </div>
   );
 }
