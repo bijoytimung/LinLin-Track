@@ -29,10 +29,10 @@ export function RecentSales({ sales }: RecentSalesProps) {
           <div className="ml-4 space-y-1">
             <p className="text-sm font-medium leading-none">{sale.item.name}</p>
             <p className="text-sm text-muted-foreground">
-                Sold for ${sale.sellingPrice.toFixed(2)}
+                Sold for ₹{sale.sellingPrice.toFixed(2)}
             </p>
           </div>
-          <div className="ml-auto font-medium">+${(sale.sellingPrice - sale.item.originalValue).toFixed(2)}</div>
+          <div className="ml-auto font-medium">+₹{(sale.sellingPrice - sale.item.originalValue).toFixed(2)}</div>
         </div>
       ))}
     </div>

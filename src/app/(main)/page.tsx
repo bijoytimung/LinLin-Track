@@ -49,14 +49,27 @@ export default function DashboardPage() {
            saleDate.getFullYear() === today.getFullYear();
   });
 
-  const totalRevenue = todaySales.reduce((acc, sale) => {
+  const todayRevenue = todaySales.reduce((acc, sale) => {
     return acc + sale.sellingPrice * sale.quantity;
   }, 0);
 
-  const totalProfit = todaySales.reduce((acc, sale) => {
+  const todayProfit = todaySales.reduce((acc, sale) => {
     const cost = sale.item.originalValue * sale.quantity;
     const revenue = sale.sellingPrice * sale.quantity;
     return acc + (revenue - cost);
+  }, 0);
+  
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  const monthlyRevenue = enrichedSales
+    .filter(sale => {
+      const saleDate = new Date(sale.date);
+      return saleDate.getMonth() === currentMonth && saleDate.getFullYear() === currentYear;
+    })
+    .reduce((acc, sale) => acc + sale.sellingPrice * sale.quantity, 0);
+
+  const overallRevenue = enrichedSales.reduce((acc, sale) => {
+    return acc + sale.sellingPrice * sale.quantity;
   }, 0);
 
   const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
@@ -70,7 +83,7 @@ export default function DashboardPage() {
                 Good Morning, <Heart className="inline text-pink-400 fill-current" /> LinLin <Star className="inline text-yellow-400 fill-current" />
             </h1>
         </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -78,7 +91,27 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{todayRevenue.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              This Month's Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{monthlyRevenue.toFixed(2)}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Overall Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{overallRevenue.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
@@ -88,7 +121,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalProfit.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{todayProfit.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>

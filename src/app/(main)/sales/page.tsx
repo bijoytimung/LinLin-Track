@@ -176,14 +176,14 @@ export default function SalesPage() {
                   </TableCell>
                   <TableCell className="text-right">{sale.quantity}</TableCell>
                   <TableCell className="text-right hidden sm:table-cell">
-                    ${sale.item.originalValue.toFixed(2)}
+                    ₹{sale.item.originalValue.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
-                    ${sale.sellingPrice.toFixed(2)}
+                    ₹{sale.sellingPrice.toFixed(2)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant={profit >= 0 ? 'default' : 'destructive'} className={`${profit >=0 ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : ''}`}>
-                      ${profit.toFixed(2)}
+                      ₹{profit.toFixed(2)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

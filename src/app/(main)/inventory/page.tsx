@@ -188,7 +188,7 @@ export default function InventoryPage() {
             <CardContent>
               <CardTitle className="text-lg">{item.name}</CardTitle>
               <CardDescription className="mt-1">
-                Original Value: ${item.originalValue.toFixed(2)}
+                Original Value: ₹{item.originalValue.toFixed(2)}
               </CardDescription>
             </CardContent>
             <CardFooter>

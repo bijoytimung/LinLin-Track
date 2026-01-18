@@ -47,13 +47,13 @@ export function Overview({ data }: OverviewProps) {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `$${value}`}
+          tickFormatter={(value) => `₹${value}`}
         />
          <Tooltip 
           cursor={false}
           content={<ChartTooltipContent 
             formatter={(value, name, item) => {
-              return [`$${(value as number).toFixed(2)}`, `Revenue for ${item.payload.name}`];
+              return [`₹${(value as number).toFixed(2)}`, `Revenue for ${item.payload.name}`];
             }}
             labelClassName="font-bold"
           />}
