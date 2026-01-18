@@ -4,8 +4,8 @@ import { RecentSales } from './_components/recent-sales';
 import { useCollection, useFirestore } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { useMemoFirebase } from '@/firebase/provider';
-import { useMemo } from 'react';
-import { Heart, Star } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Heart, Star, Calendar as CalendarIcon } from 'lucide-react';
 import { Overview } from './_components/overview';
 import {
   Card,
@@ -14,9 +14,17 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
+  const [filter, setFilter] = useState<'today' | 'month' | 'overall' | 'custom'>('today');
+  const [customDate, setCustomDate] = useState<Date | undefined>(new Date());
   
   const salesCollectionRef = useMemoFirebase(
     () => collection(firestore, 'sales_transactions'),
@@ -41,29 +49,82 @@ export default function DashboardPage() {
     })).filter(sale => sale.item);
   }, [sales, inventory]);
 
-  const today = new Date();
-  const todaySales = enrichedSales.filter(sale => {
-    const saleDate = new Date(sale.date);
-    return saleDate.getDate() === today.getDate() &&
-           saleDate.getMonth() === today.getMonth() &&
-           saleDate.getFullYear() === today.getFullYear();
-  });
+  const displaySales = useMemo(() => {
+    const now = new Date();
+    switch(filter) {
+        case 'today':
+            return enrichedSales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate.getDate() === now.getDate() &&
+                       saleDate.getMonth() === now.getMonth() &&
+                       saleDate.getFullYear() === now.getFullYear();
+            });
+        case 'month':
+            return enrichedSales.filter(sale => {
+                const saleDate = new Date(sale.date);
+                return saleDate.getMonth() === now.getMonth() &&
+                       saleDate.getFullYear() === now.getFullYear();
+            });
+        case 'overall':
+            return enrichedSales;
+        case 'custom':
+            if (customDate) {
+                return enrichedSales.filter(sale => {
+                    const saleDate = new Date(sale.date);
+                    return saleDate.getDate() === customDate.getDate() &&
+                           saleDate.getMonth() === customDate.getMonth() &&
+                           saleDate.getFullYear() === customDate.getFullYear();
+                });
+            }
+            return [];
+        default:
+            return [];
+    }
+  }, [enrichedSales, filter, customDate]);
 
-  const todayRevenue = todaySales.reduce((acc, sale) => {
+
+  const displayRevenue = displaySales.reduce((acc, sale) => {
     return acc + sale.sellingPrice * sale.quantity;
   }, 0);
 
-  const todayProfit = todaySales.reduce((acc, sale) => {
+  const displayProfit = displaySales.reduce((acc, sale) => {
     const cost = sale.item.originalValue * sale.quantity;
     const revenue = sale.sellingPrice * sale.quantity;
     return acc + (revenue - cost);
   }, 0);
   
-  const todayCapital = todayRevenue - todayProfit;
+  const displayCapital = displayRevenue - displayProfit;
 
-  const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
+  const itemsSoldCount = displaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
-  const recentSalesToday = todaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
+  const recentSales = displaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
+
+  const getTitlePrefix = () => {
+    switch (filter) {
+        case 'today': return "Today's";
+        case 'month': return "This Month's";
+        case 'overall': return "Overall";
+        case 'custom': return `${customDate ? format(customDate, 'do MMM') : 'Selected'}'s`;
+        default: return '';
+    }
+  }
+  const titlePrefix = getTitlePrefix();
+
+  const getRecentSalesDescription = () => {
+    const count = displaySales.length;
+    switch (filter) {
+        case 'today': return `You've made ${count} sales today.`;
+        case 'month': return `You've made ${count} sales this month.`;
+        case 'overall': return `You've made ${count} sales in total.`;
+        case 'custom': 
+            if(customDate) {
+                return `You made ${count} sales on ${format(customDate, 'PPP')}.`;
+            }
+            return `You've made ${count} sales.`;
+        default: return '';
+    }
+  }
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -72,40 +133,78 @@ export default function DashboardPage() {
                 Good Morning, <Heart className="inline text-pink-400 fill-current" /> LinLin <Star className="inline text-yellow-400 fill-current" />
             </h1>
         </div>
+         <div className="flex items-center justify-between">
+            <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
+                <TabsList>
+                    <TabsTrigger value="today">Today</TabsTrigger>
+                    <TabsTrigger value="month">This Month</TabsTrigger>
+                    <TabsTrigger value="overall">Overall</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-[240px] justify-start text-left font-normal",
+                            filter !== 'custom' && "text-muted-foreground",
+                            filter === 'custom' && "border-primary ring-1 ring-primary"
+                        )}
+                    >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {customDate ? format(customDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={customDate}
+                        onSelect={(date) => {
+                            setCustomDate(date);
+                            setFilter('custom');
+                        }}
+                        disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                        }
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+        </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Today's Revenue
+              {titlePrefix} Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{todayRevenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{displayRevenue.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Today's Profit
+              {titlePrefix} Profit
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{todayProfit.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{displayProfit.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Today's Capital
+              {titlePrefix} Capital
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹{todayCapital.toFixed(2)}</div>
+            <div className="text-2xl font-bold">₹{displayCapital.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Items Sold Today</CardTitle>
+            <CardTitle className="text-sm font-medium">Items Sold</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+{itemsSoldCount}</div>
@@ -123,13 +222,13 @@ export default function DashboardPage() {
         </Card>
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Today's Sales</CardTitle>
+            <CardTitle>{titlePrefix} Sales</CardTitle>
             <CardDescription>
-              You've made {todaySales.length} sales today.
+              {getRecentSalesDescription()}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSales sales={recentSalesToday} />
+            <RecentSales sales={recentSales} />
           </CardContent>
         </Card>
       </div>
