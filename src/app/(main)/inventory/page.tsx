@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import {
@@ -9,21 +8,35 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { useCollection, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
 import type { InventoryItem } from '@/lib/data';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { AddItemDialog } from './_components/add-item-dialog';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { seedData } from '@/lib/seed-data';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { Trash } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 export default function InventoryPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
 
   const inventoryCollectionRef = useMemoFirebase(
     () => collection(firestore, 'inventory_items'),
@@ -94,6 +107,19 @@ export default function InventoryPage() {
     }
   };
 
+  const handleDeleteItem = () => {
+    if (!itemToDelete || !firestore) return;
+
+    deleteDocumentNonBlocking(doc(firestore, 'inventory_items', itemToDelete.id));
+
+    toast({
+      title: 'Item deleted',
+      description: `"${itemToDelete.name}" has been removed from your inventory.`,
+    });
+
+    setItemToDelete(null);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -138,6 +164,38 @@ export default function InventoryPage() {
                   className="object-cover"
                   data-ai-hint={item.imageHint}
                 />
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2 z-10 h-7 w-7 opacity-80 hover:opacity-100"
+                            onClick={() => setItemToDelete(item)}
+                        >
+                            <Trash className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
+                    {itemToDelete?.id === item.id && (
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete the item
+                                "{itemToDelete.name}". Associated sales records will remain but may no longer display correctly.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setItemToDelete(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                onClick={handleDeleteItem}
+                                className={buttonVariants({ variant: 'destructive' })}
+                                >
+                                Delete
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    )}
+                </AlertDialog>
               </div>
             </CardHeader>
             <CardContent>
