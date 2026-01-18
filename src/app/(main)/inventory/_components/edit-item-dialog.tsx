@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, Upload, X } from 'lucide-react';
+import { Camera, Upload, X, PlusCircle } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -23,17 +23,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { InventoryItem } from '@/lib/data';
+import type { InventoryItem, Category } from '@/lib/data';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMemoFirebase } from '@/firebase/provider';
+import { AddCategoryDialog } from './add-category-dialog';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Item name is required.'),
+  category: z.string().min(1, 'Category is required.'),
   originalValue: z.coerce.number().min(0, 'Original value must be a positive number.'),
   quantity: z.coerce.number().int().min(0, 'Quantity must be a positive integer.'),
   image: z.object({
@@ -56,11 +60,20 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
   const firestore = useFirestore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
+
+  const categoriesCollectionRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'categories') : null),
+    [firestore]
+  );
+  const { data: categories } = useCollection<Category>(categoriesCollectionRef);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: item.name,
+      category: item.category,
       originalValue: item.originalValue,
       quantity: item.quantity,
       image: {
@@ -75,6 +88,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
     if (open) {
         form.reset({
           name: item.name,
+          category: item.category,
           originalValue: item.originalValue,
           quantity: item.quantity,
           image: {
@@ -162,6 +176,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
     
     updateDocumentNonBlocking(itemRef, {
       name: values.name,
+      category: values.category,
       originalValue: values.originalValue,
       quantity: values.quantity,
       imageUrl: values.imageUrl || values.image.dataUrl,
@@ -178,6 +193,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
   const imagePreview = form.watch('image.dataUrl');
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <Form {...form}>
@@ -232,10 +248,39 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
                     <FormControl>
                       <Input placeholder="e.g. Blue T-Shirt" className="col-span-3" {...field} />
                     </FormControl>
-                    <FormMessage className="col-span-4" />
+                    <FormMessage className="col-start-2 col-span-3" />
                   </FormItem>
                 )}
               />
+              <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Category</FormLabel>
+                      <div className="col-span-3 flex items-center gap-2">
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories?.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.name}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => setAddCategoryOpen(true)}>
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <FormMessage className="col-start-2 col-span-3" />
+                    </FormItem>
+                  )}
+                />
               <FormField
                 control={form.control}
                 name="originalValue"
@@ -245,7 +290,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="15.00" className="col-span-3" {...field} />
                     </FormControl>
-                    <FormMessage className="col-span-4" />
+                    <FormMessage className="col-start-2 col-span-3" />
                   </FormItem>
                 )}
               />
@@ -258,7 +303,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
                     <FormControl>
                       <Input type="number" placeholder="50" className="col-span-3" {...field} />
                     </FormControl>
-                    <FormMessage className="col-span-4" />
+                    <FormMessage className="col-start-2 col-span-3" />
                   </FormItem>
                 )}
               />
@@ -297,5 +342,7 @@ export function EditItemDialog({ item, open, onOpenChange }: EditItemDialogProps
         </Dialog>
       </DialogContent>
     </Dialog>
+    <AddCategoryDialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen} />
+    </>
   );
 }

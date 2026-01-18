@@ -6,10 +6,6 @@
       "type": "object",
       "description": "Represents an item in the inventory.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the inventory item."
-        },
         "name": {
           "type": "string",
           "description": "Name of the inventory item."
@@ -21,13 +17,30 @@
         "quantity": {
           "type": "number",
           "description": "Quantity of the item currently in stock."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the item."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL for the item's image."
+        },
+        "imageHint": {
+          "type": "string",
+          "description": "Hint for AI image generation."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the item was created."
         }
       },
       "required": [
-        "id",
         "name",
         "originalValue",
-        "quantity"
+        "quantity",
+        "category"
       ]
     },
     "SaleTransaction": {
@@ -173,6 +186,21 @@
         "totalCostOfGoodsSold",
         "totalProfit"
       ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents an inventory item category.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Name of the category."
+        }
+      },
+      "required": [
+        "name"
+      ]
     }
   },
   "auth": {
@@ -262,8 +290,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores item categories. Any authenticated user can manage them.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "Unique identifier for the category."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to store inventory, sales transactions, and summaries (daily, monthly, and annually). It prioritizes simplicity and leverages path-based ownership for user-specific data to streamline security rules.  The structure is designed to provide atomic operations. \n\n*   `/inventory_items/{inventoryItemId}`: Stores inventory items. All inventory items share the same security posture (homogenous). There is no concept of ownership. \n*   `/sales_transactions/{saleTransactionId}`: Stores sale transactions, associating each transaction with an inventory item. No concept of ownership exists.\n*   `/daily_summaries/{dailySummaryId}`: Stores the daily revenue, profit, and cost information. No concept of ownership exists.\n*   `/monthly_summaries/{monthlySummaryId}`: Stores monthly summaries in the same format as the daily summaries.  No concept of ownership exists.\n*   `/annual_summaries/{annualSummaryId}`: Stores annual summaries. No concept of ownership exists.\n\nThis structure achieves Authorization Independence as there are no cross-document `get()` operations required for security rules. Each collection stands alone, simplifying the authorization logic and enabling atomic operations.  All collections have the same security posture and there is no concept of ownership."
+    "reasoning": "The Firestore structure is designed to store inventory, sales transactions, and summaries (daily, monthly, and annually). It prioritizes simplicity and leverages path-based ownership for user-specific data to streamline security rules.  The structure is designed to provide atomic operations. \n\n*   `/inventory_items/{inventoryItemId}`: Stores inventory items. All inventory items share the same security posture (homogenous). There is no concept of ownership. \n*   `/sales_transactions/{saleTransactionId}`: Stores sale transactions, associating each transaction with an inventory item. No concept of ownership exists.\n*   `/daily_summaries/{dailySummaryId}`: Stores the daily revenue, profit, and cost information. No concept of ownership exists.\n*   `/monthly_summaries/{monthlySummaryId}`: Stores monthly summaries in the same format as the daily summaries.  No concept of ownership exists.\n*   `/annual_summaries/{annualSummaryId}`: Stores annual summaries. No concept of ownership exists.\n*   `/categories/{categoryId}`: Stores inventory item categories. No concept of ownership exists.\n\nThis structure achieves Authorization Independence as there are no cross-document `get()` operations required for security rules. Each collection stands alone, simplifying the authorization logic and enabling atomic operations.  All collections have the same security posture and there is no concept of ownership."
   }
 }

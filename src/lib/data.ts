@@ -3,9 +3,15 @@ export type InventoryItem = {
   name: string;
   originalValue: number;
   quantity: number;
+  category: string;
   imageUrl: string;
   imageHint: string;
   createdAt: Date;
+};
+
+export type Category = {
+    id: string;
+    name: string;
 };
 
 export type Sale = {

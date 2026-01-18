@@ -12,7 +12,6 @@ import {
   DialogClose,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Camera, Upload, X } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,7 +25,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useCollection } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -34,9 +33,14 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMemoFirebase } from '@/firebase/provider';
+import type { Category } from '@/lib/data';
+import { AddCategoryDialog } from './add-category-dialog';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Item name is required.'),
+  category: z.string().min(1, 'Category is required.'),
   originalValue: z.coerce.number().min(0, 'Original value must be a positive number.'),
   quantity: z.coerce.number().int().min(0, 'Quantity must be a positive integer.'),
   image: z.object({
@@ -53,11 +57,19 @@ export function AddItemDialog() {
   const firestore = useFirestore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
+
+  const categoriesCollectionRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'categories') : null),
+    [firestore]
+  );
+  const { data: categories } = useCollection<Category>(categoriesCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      category: '',
       originalValue: 0,
       quantity: 0,
       image: {},
@@ -144,6 +156,7 @@ export function AddItemDialog() {
       name: values.name,
       originalValue: values.originalValue,
       quantity: values.quantity,
+      category: values.category,
       createdAt: new Date(),
       ...imageData,
     });
@@ -159,129 +172,161 @@ export function AddItemDialog() {
   const imagePreview = form.watch('image.dataUrl');
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) form.reset(); }}>
-      <DialogTrigger asChild>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Item
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <DialogHeader>
-              <DialogTitle>Add New Item</DialogTitle>
-              <DialogDescription>
-                Enter the details for the new inventory item and add a photo.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="flex items-center justify-center">
-                <div className="relative h-32 w-32 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
-                  {imagePreview ? (
-                    <>
-                      <Image src={imagePreview} alt="Item preview" fill className="object-cover rounded-lg" />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70 text-white hover:text-white"
-                        onClick={() => form.setValue('image', { dataUrl: undefined, hint: undefined })}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </>
-                  ) : (
-                    <span>Image Preview</span>
-                  )}
+    <>
+      <Dialog open={open} onOpenChange={(isOpen) => { setOpen(isOpen); if (!isOpen) form.reset(); }}>
+        <DialogTrigger asChild>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Item
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-lg">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)}>
+              <DialogHeader>
+                <DialogTitle>Add New Item</DialogTitle>
+                <DialogDescription>
+                  Enter the details for the new inventory item and add a photo.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="flex items-center justify-center">
+                  <div className="relative h-32 w-32 rounded-lg border border-dashed flex items-center justify-center text-muted-foreground">
+                    {imagePreview ? (
+                      <>
+                        <Image src={imagePreview} alt="Item preview" fill className="object-cover rounded-lg" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-1 right-1 h-6 w-6 bg-black/50 hover:bg-black/70 text-white hover:text-white"
+                          onClick={() => form.setValue('image', { dataUrl: undefined, hint: undefined })}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <span>Image Preview</span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <Tabs defaultValue="upload">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="upload"><Upload className="mr-2 h-4 w-4" /> Upload</TabsTrigger>
-                  <TabsTrigger value="camera" onClick={() => setCameraOpen(true)}><Camera className="mr-2 h-4 w-4" /> Camera</TabsTrigger>
-                </TabsList>
-                <TabsContent value="upload">
-                   <Input type="file" accept="image/*" onChange={handleFileChange} className="mt-2"/>
-                </TabsContent>
-              </Tabs>
-              
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="grid grid-cols-4 items-center gap-4">
-                    <FormLabel className="text-right">Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Blue T-Shirt" className="col-span-3" {...field} />
-                    </FormControl>
-                    <FormMessage className="col-span-4" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="originalValue"
-                render={({ field }) => (
-                  <FormItem className="grid grid-cols-4 items-center gap-4">
-                    <FormLabel className="text-right">Original Value</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="15.00" className="col-span-3" {...field} />
-                    </FormControl>
-                    <FormMessage className="col-span-4" />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                  <FormItem className="grid grid-cols-4 items-center gap-4">
-                    <FormLabel className="text-right">Quantity</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="50" className="col-span-3" {...field} />
-                    </FormControl>
-                    <FormMessage className="col-span-4" />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Save Item</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
-        <Dialog open={isCameraOpen} onOpenChange={setCameraOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Use Camera</DialogTitle>
-            </DialogHeader>
-            {hasCameraPermission === false ? (
-              <Alert variant="destructive">
-                <AlertTitle>Camera Access Required</AlertTitle>
-                <AlertDescription>
-                  Please allow camera access in your browser to use this feature.
-                </AlertDescription>
-              </Alert>
-            ) : (
-                <div className="flex flex-col items-center gap-4">
-                  <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
-                  <Button type="button" onClick={handleCapture}>
-                    <Camera className="mr-2 h-4 w-4" />
-                    Capture Photo
-                  </Button>
-                </div>
-            )}
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">Close</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </DialogContent>
-    </Dialog>
+                <Tabs defaultValue="upload">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="upload"><Upload className="mr-2 h-4 w-4" /> Upload</TabsTrigger>
+                    <TabsTrigger value="camera" onClick={() => setCameraOpen(true)}><Camera className="mr-2 h-4 w-4" /> Camera</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="upload">
+                     <Input type="file" accept="image/*" onChange={handleFileChange} className="mt-2"/>
+                  </TabsContent>
+                </Tabs>
+                
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Blue T-Shirt" className="col-span-3" {...field} />
+                      </FormControl>
+                      <FormMessage className="col-span-4" />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Category</FormLabel>
+                      <div className="col-span-3 flex items-center gap-2">
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories?.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.name}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button type="button" variant="outline" size="icon" className="h-9 w-9" onClick={() => setAddCategoryOpen(true)}>
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <FormMessage className="col-start-2 col-span-3" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="originalValue"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Original Value</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="15.00" className="col-span-3" {...field} />
+                      </FormControl>
+                      <FormMessage className="col-span-4" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem className="grid grid-cols-4 items-center gap-4">
+                      <FormLabel className="text-right">Quantity</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="50" className="col-span-3" {...field} />
+                      </FormControl>
+                      <FormMessage className="col-span-4" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <DialogFooter>
+                <Button type="submit">Save Item</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+          <Dialog open={isCameraOpen} onOpenChange={setCameraOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Use Camera</DialogTitle>
+              </DialogHeader>
+              {hasCameraPermission === false ? (
+                <Alert variant="destructive">
+                  <AlertTitle>Camera Access Required</AlertTitle>
+                  <AlertDescription>
+                    Please allow camera access in your browser to use this feature.
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+                    <Button type="button" onClick={handleCapture}>
+                      <Camera className="mr-2 h-4 w-4" />
+                      Capture Photo
+                    </Button>
+                  </div>
+              )}
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Close</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </DialogContent>
+      </Dialog>
+      <AddCategoryDialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen} />
+    </>
   );
 }

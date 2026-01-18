@@ -1,7 +1,7 @@
 /**
  * Core Philosophy: This ruleset enforces a simple, uniform security model where all data access (read and write) is granted to any authenticated user, regardless of their specific identity. The system is designed for trusted users within a single operational context. There is no concept of individual data ownership; all data is treated as a shared resource for authenticated participants.
  *
- * Data Structure: The data is organized into five flat, top-level collections: `inventory_items`, `sales_transactions`, `daily_summaries`, `monthly_summaries`, and `annual_summaries`. There are no user-specific collections or subcollections. This structure simplifies queries and rules by avoiding nested data paths.
+ * Data Structure: The data is organized into six flat, top-level collections: `inventory_items`, `sales_transactions`, `daily_summaries`, `monthly_summaries`, `annual_summaries`, and `categories`. There are no user-specific collections or subcollections. This structure simplifies queries and rules by avoiding nested data paths.
  *
  * Key Security Decisions:
  * - Uniform Authenticated Access: The primary security requirement is that a user must be signed in to perform any operation. Anonymous sign-in is enabled, providing a low-friction way to get an authenticated session.
@@ -100,6 +100,19 @@ service cloud.firestore {
      * @principle Enforces that all interactions with the database require a valid user session.
      */
     match /annual_summaries/{annualSummaryId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && documentExists();
+    }
+
+    /**
+     * @description Controls access to item categories. Any authenticated user can manage categories.
+     * @path /categories/{categoryId}
+     * @allow (read) An authenticated user can read and list categories.
+     * @allow (write) An authenticated user can create, update, and delete categories.
+     * @principle Enforces that all interactions with the database require a valid user session.
+     */
+    match /categories/{categoryId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && documentExists();

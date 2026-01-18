@@ -9,16 +9,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useCollection, useFirestore, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import type { InventoryItem } from '@/lib/data';
+import type { InventoryItem, Category } from '@/lib/data';
 import { collection, doc } from 'firebase/firestore';
 import { AddItemDialog } from './_components/add-item-dialog';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { seedData } from '@/lib/seed-data';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Trash, Pencil } from 'lucide-react';
+import { Trash, Pencil, PlusCircle } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { EditItemDialog } from './_components/edit-item-dialog';
+import { seedCategories } from '@/lib/seed-categories';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { AddCategoryDialog } from './_components/add-category-dialog';
 
 
 export default function InventoryPage() {
@@ -38,12 +41,22 @@ export default function InventoryPage() {
   const [isSeeding, setIsSeeding] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const [itemToEdit, setItemToEdit] = useState<InventoryItem | null>(null);
+  const [isAddCategoryOpen, setAddCategoryOpen] = useState(false);
+
 
   const inventoryCollectionRef = useMemoFirebase(
     () => collection(firestore, 'inventory_items'),
     [firestore]
   );
-  const { data: items, isLoading } = useCollection<InventoryItem>(inventoryCollectionRef);
+  const { data: items, isLoading: itemsLoading } = useCollection<InventoryItem>(inventoryCollectionRef);
+
+  const categoriesCollectionRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'categories') : null),
+    [firestore]
+  );
+  const { data: categories, isLoading: categoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+
+  const isLoading = itemsLoading || categoriesLoading;
 
   const handleSeedData = async () => {
     if (!firestore || isSeeding || (items && items.length > 0)) {
@@ -62,8 +75,13 @@ export default function InventoryPage() {
 
     const inventoryCollection = collection(firestore, 'inventory_items');
     const salesCollection = collection(firestore, 'sales_transactions');
+    const categoriesCollection = collection(firestore, 'categories');
 
     try {
+        for (const categoryName of seedCategories) {
+          addDocumentNonBlocking(categoriesCollection, { name: categoryName });
+        }
+
         for (const [index, itemData] of seedData.entries()) {
             const quantitySold = itemData.initialQuantity - itemData.currentQuantity;
 
@@ -71,6 +89,7 @@ export default function InventoryPage() {
                 name: itemData.name,
                 originalValue: itemData.originalValue,
                 quantity: itemData.currentQuantity,
+                category: itemData.category,
                 imageUrl: `https://picsum.photos/seed/${index + 100}/400/400`,
                 imageHint: itemData.name.toLowerCase().split(' ').slice(0, 2).join(' '),
                 createdAt: new Date()
@@ -120,6 +139,31 @@ export default function InventoryPage() {
 
     setItemToDelete(null);
   };
+  
+  const groupedItems = useMemo(() => {
+    if (!items) return {};
+    const grouped: Record<string, InventoryItem[]> = (categories || []).reduce((acc, cat) => {
+        acc[cat.name] = [];
+        return acc;
+    }, {} as Record<string, InventoryItem[]>);
+
+    grouped['Uncategorized'] = [];
+
+    items.forEach(item => {
+        if (item.category && grouped.hasOwnProperty(item.category)) {
+            grouped[item.category].push(item);
+        } else {
+            grouped['Uncategorized'].push(item);
+        }
+    });
+
+    if (grouped['Uncategorized'].length === 0) {
+        delete grouped['Uncategorized'];
+    }
+
+    return Object.fromEntries(Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)));
+
+  }, [items, categories]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -136,75 +180,101 @@ export default function InventoryPage() {
                     {isSeeding ? 'Seeding...' : 'Seed Initial Data'}
                 </Button>
             )}
+            <Button variant="outline" onClick={() => setAddCategoryOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Category
+            </Button>
             <AddItemDialog />
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {isLoading && Array.from({ length: 8 }).map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-32 w-full rounded-md" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="mt-2 h-4 w-1/2" />
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-5 w-1/4" />
-            </CardFooter>
-          </Card>
-        ))}
-        {items?.map((item) => (
-          <Card key={item.id}>
-            <CardHeader>
-              <div className="relative h-32 w-full overflow-hidden rounded-md">
-                <Image
-                  src={item.imageUrl}
-                  alt={item.name}
-                  fill
-                  className="object-cover"
-                  data-ai-hint={item.imageHint}
-                />
-                 <div className="absolute top-2 right-2 z-10 flex gap-2">
-                    <Button
-                        variant="secondary"
-                        size="icon"
-                        className="h-7 w-7 opacity-80 hover:opacity-100"
-                        onClick={() => setItemToEdit(item)}
-                    >
-                        <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        size="icon"
-                        className="h-7 w-7 opacity-80 hover:opacity-100"
-                        onClick={() => setItemToDelete(item)}
-                    >
-                        <Trash className="h-4 w-4" />
-                    </Button>
-                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <CardTitle className="text-lg">{item.name}</CardTitle>
-              <CardDescription className="mt-1">
-                Original Value: ₹{item.originalValue.toFixed(2)}
-              </CardDescription>
-            </CardContent>
-            <CardFooter>
-              <p className="text-sm font-medium text-muted-foreground">
-                In Stock: <span className="text-foreground">{item.quantity}</span>
-              </p>
-            </CardFooter>
-          </Card>
-        ))}
-        {!isLoading && items?.length === 0 && (
-             <div className="col-span-full text-center py-12">
-                <p className="text-muted-foreground">Your inventory is empty.</p>
-                <p className="text-muted-foreground text-sm">Click "Seed Initial Data" to get started with some sample products.</p>
-            </div>
-        )}
-      </div>
+       {isLoading && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-32 w-full rounded-md" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="mt-2 h-4 w-1/2" />
+              </CardContent>
+              <CardFooter>
+                <Skeleton className="h-5 w-1/4" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {!isLoading && items && items.length > 0 && (
+        <Accordion type="multiple" defaultValue={Object.keys(groupedItems)} className="w-full space-y-4">
+          {Object.entries(groupedItems).map(([category, categoryItems]) => {
+            if (categoryItems.length === 0) return null;
+            return (
+              <AccordionItem value={category} key={category} className="border-none">
+                  <AccordionTrigger className="text-lg font-semibold capitalize bg-muted px-4 py-2 rounded-md hover:no-underline">
+                    {category} ({categoryItems.length})
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                        {categoryItems.map((item) => (
+                          <Card key={item.id}>
+                            <CardHeader>
+                              <div className="relative h-32 w-full overflow-hidden rounded-md">
+                                <Image
+                                  src={item.imageUrl}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover"
+                                  data-ai-hint={item.imageHint}
+                                />
+                                <div className="absolute top-2 right-2 z-10 flex gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="icon"
+                                        className="h-7 w-7 opacity-80 hover:opacity-100"
+                                        onClick={() => setItemToEdit(item)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        size="icon"
+                                        className="h-7 w-7 opacity-80 hover:opacity-100"
+                                        onClick={() => setItemToDelete(item)}
+                                    >
+                                        <Trash className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <CardTitle className="text-lg">{item.name}</CardTitle>
+                              <CardDescription className="mt-1">
+                                Original Value: ₹{item.originalValue.toFixed(2)}
+                              </CardDescription>
+                            </CardContent>
+                            <CardFooter>
+                              <p className="text-sm font-medium text-muted-foreground">
+                                In Stock: <span className="text-foreground">{item.quantity}</span>
+                              </p>
+                            </CardFooter>
+                          </Card>
+                        ))}
+                      </div>
+                  </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      )}
+
+      {!isLoading && items?.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <p className="text-muted-foreground">Your inventory is empty.</p>
+              <p className="text-muted-foreground text-sm">Click "Seed Initial Data" to get started with some sample products.</p>
+          </div>
+      )}
       
       {itemToEdit && (
         <EditItemDialog
@@ -240,6 +310,7 @@ export default function InventoryPage() {
             </AlertDialogContent>
         )}
       </AlertDialog>
+      <AddCategoryDialog open={isAddCategoryOpen} onOpenChange={setAddCategoryOpen} />
     </div>
   );
 }
