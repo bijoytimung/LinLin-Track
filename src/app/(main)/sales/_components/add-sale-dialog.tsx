@@ -11,7 +11,6 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -20,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { InventoryItem } from '@/lib/data';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Calendar as CalendarIcon } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -36,11 +35,18 @@ import { useFirestore } from '@/firebase';
 import { collection, doc, runTransaction } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const formSchema = z.object({
   inventoryItemId: z.string().min(1, 'Please select an item.'),
   quantity: z.coerce.number().int().min(1, 'Quantity must be at least 1.'),
   sellingPrice: z.coerce.number().min(0, 'Selling price must be a positive number.'),
+  transactionDate: z.date({
+    required_error: "A date of sale is required.",
+  }),
 });
 
 interface AddSaleDialogProps {
@@ -58,6 +64,7 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
       inventoryItemId: '',
       quantity: 1,
       sellingPrice: 0,
+      transactionDate: new Date(),
     },
   });
 
@@ -98,8 +105,10 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
         transaction.update(itemRef, { quantity: newQuantity });
 
         const saleData = {
-          ...values,
-          transactionDate: new Date(),
+            inventoryItemId: values.inventoryItemId,
+            quantity: values.quantity,
+            sellingPrice: values.sellingPrice,
+            transactionDate: values.transactionDate,
         };
         // Firestore will generate an ID for the new document
         transaction.set(doc(salesCollRef), saleData);
@@ -123,7 +132,7 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (isOpen) form.reset({ transactionDate: new Date() }); setOpen(isOpen); }}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
@@ -184,8 +193,45 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
                   <FormItem className="grid grid-cols-4 items-center gap-4">
                     <FormLabel className="text-right">Selling Price</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="20.00" className="col-span-3" {...field} />
+                      <Input type="number" placeholder="20.00" step="0.01" className="col-span-3" {...field} />
                     </FormControl>
+                    <FormMessage className="col-span-4" />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="transactionDate"
+                render={({ field }) => (
+                  <FormItem className="grid grid-cols-4 items-center gap-4">
+                    <FormLabel className="text-right">Date of Sale</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "col-span-3 justify-start text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
                     <FormMessage className="col-span-4" />
                   </FormItem>
                 )}
