@@ -34,7 +34,7 @@ import {
 import { useFirestore } from '@/firebase';
 import { collection, doc, runTransaction } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
@@ -51,9 +51,10 @@ const formSchema = z.object({
 
 interface AddSaleDialogProps {
   inventory: InventoryItem[];
+  selectedDate?: Date;
 }
 
-export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
+export function AddSaleDialog({ inventory, selectedDate }: AddSaleDialogProps) {
   const [open, setOpen] = useState(false);
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -64,9 +65,20 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
       inventoryItemId: '',
       quantity: 1,
       sellingPrice: 0,
-      transactionDate: new Date(),
+      transactionDate: selectedDate || new Date(),
     },
   });
+
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        inventoryItemId: '',
+        quantity: 1,
+        sellingPrice: 0,
+        transactionDate: selectedDate || new Date(),
+      });
+    }
+  }, [open, selectedDate, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const itemSold = inventory.find(item => item.id === values.inventoryItemId);
@@ -119,7 +131,6 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
         description: 'The new sale has been successfully saved.',
       });
       setOpen(false);
-      form.reset();
 
     } catch (e: any) {
       console.error("Transaction failed: ", e);
@@ -132,7 +143,7 @@ export function AddSaleDialog({ inventory }: AddSaleDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => { if (isOpen) form.reset({ transactionDate: new Date() }); setOpen(isOpen); }}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />

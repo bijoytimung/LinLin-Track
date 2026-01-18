@@ -9,13 +9,13 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { useCollection, useFirestore } from '@/firebase';
-import { collection, doc, getDoc, runTransaction } from 'firebase/firestore';
+import { collection, doc, runTransaction } from 'firebase/firestore';
 import { useMemo, useState } from 'react';
 import type { InventoryItem, Sale, EnrichedSale } from '@/lib/data';
 import { AddSaleDialog } from './_components/add-sale-dialog';
 import { useMemoFirebase } from '@/firebase/provider';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Trash } from 'lucide-react';
+import { Trash, Calendar as CalendarIcon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,14 +25,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 export default function SalesPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [saleToDelete, setSaleToDelete] = useState<EnrichedSale | null>(null);
+  const [filterDate, setFilterDate] = useState<Date | undefined>();
 
   const salesCollectionRef = useMemoFirebase(() => collection(firestore, 'sales_transactions'), [firestore]);
   const inventoryCollectionRef = useMemoFirebase(() => collection(firestore, 'inventory_items'), [firestore]);
@@ -49,6 +53,22 @@ export default function SalesPage() {
       date: (sale.transactionDate as any).toDate(),
     })).filter(sale => sale.item).sort((a,b) => b.date.getTime() - a.date.getTime());
   }, [sales, inventory]);
+
+  const filteredSales = useMemo(() => {
+    if (!enrichedSales) return [];
+    if (!filterDate) return enrichedSales;
+
+    const startOfDay = new Date(filterDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(filterDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    return enrichedSales.filter(sale => {
+      const saleDate = new Date(sale.date);
+      return saleDate >= startOfDay && saleDate <= endOfDay;
+    });
+  }, [enrichedSales, filterDate]);
 
   const handleDeleteSale = async () => {
     if (!saleToDelete) return;
@@ -96,7 +116,32 @@ export default function SalesPage() {
             View and manage all your recorded sales.
           </p>
         </div>
-        <AddSaleDialog inventory={inventory || []} />
+        <div className="flex items-center gap-4">
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                    variant={"outline"}
+                    className={cn(
+                        "w-[240px] justify-start text-left font-normal",
+                        !filterDate && "text-muted-foreground"
+                    )}
+                    >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {filterDate ? format(filterDate, "PPP") : <span>Filter by date...</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                    <Calendar
+                    mode="single"
+                    selected={filterDate}
+                    onSelect={setFilterDate}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+            <AddSaleDialog inventory={inventory || []} selectedDate={filterDate} />
+        </div>
       </div>
       <div className="rounded-lg border bg-white/80 dark:bg-black/50">
         <Table>
@@ -117,7 +162,7 @@ export default function SalesPage() {
                     <TableCell colSpan={7} className="text-center">Loading sales...</TableCell>
                 </TableRow>
             )}
-            {enrichedSales.map((sale) => {
+            {filteredSales.map((sale) => {
               const profit =
                 sale.sellingPrice * sale.quantity -
                 sale.item.originalValue * sale.quantity;
@@ -142,38 +187,47 @@ export default function SalesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                           <Button variant="ghost" size="icon" onClick={() => setSaleToDelete(sale)}>
-                              <Trash className="h-4 w-4 text-destructive" />
-                           </Button>
-                        </AlertDialogTrigger>
-                        {saleToDelete && saleToDelete.id === sale.id && (
-                           <AlertDialogContent>
-                              <AlertDialogHeader>
-                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                 <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete the sale
-                                    for <span className="font-semibold">{saleToDelete.item.name}</span> and
-                                    add <span className="font-semibold">{saleToDelete.quantity}</span> back to your inventory.
-                                 </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                 <AlertDialogCancel onClick={() => setSaleToDelete(null)}>Cancel</AlertDialogCancel>
-                                 <AlertDialogAction onClick={handleDeleteSale} className={buttonVariants({variant: "destructive"})}>
-                                    Delete
-                                 </AlertDialogAction>
-                              </AlertDialogFooter>
-                           </AlertDialogContent>
-                        )}
-                     </AlertDialog>
+                     <Button variant="ghost" size="icon" onClick={() => setSaleToDelete(sale)}>
+                        <Trash className="h-4 w-4 text-destructive" />
+                     </Button>
                   </TableCell>
                 </TableRow>
               );
             })}
+             {!(salesLoading || inventoryLoading) && filteredSales.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={7} className="text-center h-24">
+                      {filterDate ? `No sales found for ${format(filterDate, "PPP")}.` : 'No sales recorded yet.'}
+                    </TableCell>
+                </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={!!saleToDelete} onOpenChange={(isOpen) => !isOpen && setSaleToDelete(null)}>
+        {saleToDelete && (
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the sale
+                    for <span className="font-semibold">{saleToDelete.item.name}</span> and
+                    add <span className="font-semibold">{saleToDelete.quantity}</span> back to your inventory.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setSaleToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                    onClick={handleDeleteSale}
+                    className={buttonVariants({ variant: 'destructive' })}
+                    >
+                    Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        )}
+      </AlertDialog>
     </div>
   );
 }
