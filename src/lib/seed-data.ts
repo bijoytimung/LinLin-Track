@@ -1,25 +1,10 @@
 
 export const seedData = [
-  { name: "Anime Keychain", initialQuantity: 11, currentQuantity: 10, originalValue: 65, sellingPrice: 230 },
-  { name: "Ring Keychain", initialQuantity: 5, currentQuantity: 5, originalValue: 65, sellingPrice: 180 },
-  { name: "Small Keychain", initialQuantity: 12, currentQuantity: 12, originalValue: 15, sellingPrice: 50 },
-  { name: "Pen Diary Pack", initialQuantity: 12, currentQuantity: 12, originalValue: 75, sellingPrice: 200 },
-  { name: "Mirror", initialQuantity: 12, currentQuantity: 11, originalValue: 35, sellingPrice: 140 },
-  { name: "Nail Cutter", initialQuantity: 12, currentQuantity: 10, originalValue: 45, sellingPrice: 100 },
-  { name: "Hair Band ( thick )", initialQuantity: 12, currentQuantity: 12, originalValue: 35, sellingPrice: 150 },
-  { name: "Hair Band", initialQuantity: 3, currentQuantity: 3, originalValue: 80, sellingPrice: 250 },
-  { name: "Hair Band Pearls", initialQuantity: 12, currentQuantity: 12, originalValue: 25, sellingPrice: 150 },
-  { name: "Mobile chain", initialQuantity: 24, currentQuantity: 17, originalValue: 50, sellingPrice: 100 },
-  { name: "Tiara", initialQuantity: 1, currentQuantity: 1, originalValue: 80, sellingPrice: 250 },
-  { name: "Capybara clips", initialQuantity: 10, currentQuantity: 10, originalValue: 20, sellingPrice: 50 },
-  { name: "Anime Figures", initialQuantity: 5, currentQuantity: 4, originalValue: 120, sellingPrice: 249 },
-  { name: "Princess Clip", initialQuantity: 6, currentQuantity: 6, originalValue: 150, sellingPrice: 250 },
-  { name: "Jiamei Clips", initialQuantity: 20, currentQuantity: 19, originalValue: 25, sellingPrice: 80 },
-  { name: "Earings Set", initialQuantity: 7, currentQuantity: 3, originalValue: 100, sellingPrice: 150 },
-  { name: "Fashion Jewellery Earings", initialQuantity: 5, currentQuantity: 4, originalValue: 110, sellingPrice: 180 },
-  { name: "Mini Clip set", initialQuantity: 12, currentQuantity: 10, originalValue: 8, sellingPrice: 20 },
-  { name: "Rubbet clip Box set", initialQuantity: 12, currentQuantity: 12, originalValue: 70, sellingPrice: 200 },
-  { name: "Pearl Rubber", initialQuantity: 12, currentQuantity: 12, originalValue: 60, sellingPrice: 150 },
-  { name: "Hello Kitty KeyChain", initialQuantity: 12, currentQuantity: 10, originalValue: 70, sellingPrice: 150 },
-  { name: "Elephant Keychain", initialQuantity: 2, currentQuantity: 2, originalValue: 130, sellingPrice: 250 }
+  { name: "Jarong", initialQuantity: 3, currentQuantity: 1, originalValue: 370, sellingPrice: 500 },
+  { name: "Jarong Eri", initialQuantity: 16, currentQuantity: 13, originalValue: 800, sellingPrice: 1500 },
+  { name: "Jarong Abu", initialQuantity: 1, currentQuantity: 0, originalValue: 1000, sellingPrice: 1500 },
+  { name: "Jarong Abu", initialQuantity: 3, currentQuantity: 3, originalValue: 800, sellingPrice: 1200 },
+  { name: "Poho ERI", initialQuantity: 3, currentQuantity: 3, originalValue: 600, sellingPrice: 1300 },
+  { name: "Pekok Eri", initialQuantity: 1, currentQuantity: 1, originalValue: 5000, sellingPrice: 7000 },
+  { name: "Pekok DYED Eri", initialQuantity: 3, currentQuantity: 3, originalValue: 5500, sellingPrice: 7500 }
 ];
