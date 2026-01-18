@@ -60,6 +60,11 @@ export default function DashboardPage() {
   }, 0);
   
   const itemsSoldCount = todaySales.reduce((acc, sale) => acc + sale.quantity, 0);
+
+  const totalCapital = useMemo(() => {
+    if (!inventory) return 0;
+    return inventory.reduce((acc, item) => acc + item.originalValue * item.quantity, 0);
+  }, [inventory]);
   
   const recentSalesToday = todaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
 
@@ -102,11 +107,11 @@ export default function DashboardPage() {
          <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Inventory Items
+              Total Capital
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inventory?.length || 0}</div>
+            <div className="text-2xl font-bold">₹{totalCapital.toFixed(2)}</div>
           </CardContent>
         </Card>
       </div>
