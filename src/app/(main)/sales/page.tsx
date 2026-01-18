@@ -31,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 export default function SalesPage() {
   const firestore = useFirestore();
@@ -169,7 +170,18 @@ export default function SalesPage() {
               return (
                 <TableRow key={sale.id}>
                   <TableCell>
-                    <div className="font-medium">{sale.item.name}</div>
+                    <div className="flex items-center gap-4">
+                      <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-md">
+                        <Image
+                          src={sale.item.imageUrl}
+                          alt={sale.item.name}
+                          fill
+                          className="object-cover"
+                          data-ai-hint={sale.item.imageHint}
+                        />
+                      </div>
+                      <div className="font-medium">{sale.item.name}</div>
+                    </div>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {sale.date.toLocaleDateString()}

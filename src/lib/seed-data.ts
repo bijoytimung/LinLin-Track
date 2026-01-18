@@ -1,10 +1,12 @@
 
 export const seedData = [
-  { name: "Jarong", initialQuantity: 3, currentQuantity: 1, originalValue: 370, sellingPrice: 500 },
-  { name: "Jarong Eri", initialQuantity: 16, currentQuantity: 13, originalValue: 800, sellingPrice: 1500 },
-  { name: "Jarong Abu", initialQuantity: 1, currentQuantity: 0, originalValue: 1000, sellingPrice: 1500 },
-  { name: "Jarong Abu", initialQuantity: 3, currentQuantity: 3, originalValue: 800, sellingPrice: 1200 },
-  { name: "Poho ERI", initialQuantity: 3, currentQuantity: 3, originalValue: 600, sellingPrice: 1300 },
-  { name: "Pekok Eri", initialQuantity: 1, currentQuantity: 1, originalValue: 5000, sellingPrice: 7000 },
-  { name: "Pekok DYED Eri", initialQuantity: 3, currentQuantity: 3, originalValue: 5500, sellingPrice: 7500 }
+  { name: "Mobile Chain", initialQuantity: 10, currentQuantity: 10, originalValue: 150, sellingPrice: 250 },
+  { name: "Pen DiaryPack", initialQuantity: 10, currentQuantity: 10, originalValue: 200, sellingPrice: 350 },
+  { name: "HelloKitty Keychain", initialQuantity: 10, currentQuantity: 10, originalValue: 100, sellingPrice: 200 },
+  { name: "Anime Keychain", initialQuantity: 10, currentQuantity: 10, originalValue: 120, sellingPrice: 220 },
+  { name: "Mirror", initialQuantity: 10, currentQuantity: 10, originalValue: 80, sellingPrice: 150 },
+  { name: "Comb", initialQuantity: 10, currentQuantity: 10, originalValue: 50, sellingPrice: 100 },
+  { name: "Anime ( DS )", initialQuantity: 10, currentQuantity: 10, originalValue: 180, sellingPrice: 300 },
+  { name: "FlowerRectClutchers", initialQuantity: 10, currentQuantity: 10, originalValue: 250, sellingPrice: 400 },
+  { name: "BoardAndDiary", initialQuantity: 10, currentQuantity: 10, originalValue: 300, sellingPrice: 500 }
 ];
