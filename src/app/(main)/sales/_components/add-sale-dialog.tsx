@@ -34,11 +34,12 @@ import {
 import { useFirestore } from '@/firebase';
 import { collection, doc, runTransaction } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 const formSchema = z.object({
   inventoryItemId: z.string().min(1, 'Please select an item.'),
@@ -68,6 +69,12 @@ export function AddSaleDialog({ inventory, selectedDate }: AddSaleDialogProps) {
       transactionDate: selectedDate || new Date(),
     },
   });
+
+  const selectedItemId = form.watch('inventoryItemId');
+  const selectedItem = useMemo(
+    () => inventory.find((item) => item.id === selectedItemId),
+    [inventory, selectedItemId]
+  );
 
   useEffect(() => {
     if (open) {
@@ -160,6 +167,19 @@ export function AddSaleDialog({ inventory, selectedDate }: AddSaleDialogProps) {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {selectedItem && (
+                <div className="flex items-center justify-center">
+                  <div className="relative h-24 w-24 rounded-lg border border-dashed">
+                    <Image
+                      src={selectedItem.imageUrl}
+                      alt={selectedItem.name}
+                      fill
+                      className="object-cover rounded-lg"
+                      data-ai-hint={selectedItem.imageHint}
+                    />
+                  </div>
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="inventoryItemId"
