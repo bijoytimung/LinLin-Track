@@ -18,7 +18,7 @@ export function Overview({ data, metric }: OverviewProps) {
 
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <BarChart accessibilityLayer data={data} key={metric}>
+      <BarChart accessibilityLayer data={data}>
         <XAxis
           dataKey="name"
           stroke="hsl(var(--muted-foreground))"

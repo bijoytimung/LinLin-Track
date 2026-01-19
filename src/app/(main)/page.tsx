@@ -290,7 +290,7 @@ export default function DashboardPage() {
             </Tabs>
           </CardHeader>
           <CardContent className="pl-2">
-            <Overview data={overviewData} metric={graphMetric} />
+            <Overview key={graphMetric} data={overviewData} metric={graphMetric} />
           </CardContent>
         </Card>
         <Card className="col-span-3">
