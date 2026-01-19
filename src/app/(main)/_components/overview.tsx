@@ -1,40 +1,24 @@
 "use client";
 
-import type { EnrichedSale } from '@/lib/data';
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from 'recharts';
 import { ChartTooltipContent, ChartContainer, type ChartConfig } from '@/components/ui/chart';
 
 interface OverviewProps {
-  data: EnrichedSale[];
+  data: {name: string, total: number}[];
+  metric: 'revenue' | 'profit';
 }
 
-const chartConfig = {
-  total: {
-    label: "Total",
-    color: "hsl(var(--primary))",
-  },
-} satisfies ChartConfig;
-
-export function Overview({ data }: OverviewProps) {
-    const monthlyRevenue = Array.from({ length: 12 }, (_, i) => {
-        const month = new Date(0, i).toLocaleString('default', { month: 'short' });
-        return { name: month, total: 0 };
-    });
-
-    const today = new Date();
-    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-
-    data.forEach(sale => {
-        const saleDate = new Date(sale.date);
-        if (saleDate >= oneYearAgo) {
-            const monthIndex = saleDate.getMonth();
-            monthlyRevenue[monthIndex].total += sale.sellingPrice * sale.quantity;
-        }
-    });
+export function Overview({ data, metric }: OverviewProps) {
+    const chartConfig = {
+        total: {
+            label: metric === 'revenue' ? "Revenue" : "Profit",
+            color: metric === 'revenue' ? "hsl(var(--primary))" : "hsl(var(--chart-2))",
+        },
+    } satisfies ChartConfig;
 
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-      <BarChart accessibilityLayer data={monthlyRevenue}>
+      <BarChart accessibilityLayer data={data}>
         <XAxis
           dataKey="name"
           stroke="hsl(var(--muted-foreground))"
@@ -53,7 +37,8 @@ export function Overview({ data }: OverviewProps) {
           cursor={false}
           content={<ChartTooltipContent 
             formatter={(value, name, item) => {
-              return [`₹${(value as number).toFixed(2)}`, `Revenue for ${item.payload.name}`];
+              const label = metric === 'revenue' ? 'Total Sales' : 'Profit';
+              return [`₹${(value as number).toFixed(2)}`, `${label} for ${item.payload.name}`];
             }}
             labelClassName="font-bold"
           />}

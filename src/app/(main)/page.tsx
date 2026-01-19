@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
   const [filter, setFilter] = useState<'today' | 'month' | 'overall' | 'custom'>('today');
   const [customDate, setCustomDate] = useState<Date | undefined>(new Date());
+  const [graphMetric, setGraphMetric] = useState<'revenue' | 'profit'>('revenue');
   
   const salesCollectionRef = useMemoFirebase(
     () => collection(firestore, 'sales_transactions'),
@@ -98,6 +99,72 @@ export default function DashboardPage() {
   const itemsSoldCount = displaySales.reduce((acc, sale) => acc + sale.quantity, 0);
   
   const recentSales = displaySales.sort((a,b) => b.date.getTime() - a.date.getTime());
+
+  const overviewData = useMemo(() => {
+    if (filter === 'month') {
+        const dailyData: { [key: string]: { revenue: number; profit: number } } = {};
+        
+        displaySales.forEach(sale => {
+            const day = format(new Date(sale.date), 'd');
+            if (!dailyData[day]) {
+                dailyData[day] = { revenue: 0, profit: 0 };
+            }
+            const revenue = sale.sellingPrice * sale.quantity;
+            const profit = revenue - (sale.item.originalValue * sale.quantity);
+            dailyData[day].revenue += revenue;
+            dailyData[day].profit += profit;
+        });
+
+        // Fill in missing days
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const result = [];
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayStr = String(i);
+            const values = dailyData[dayStr] || { revenue: 0, profit: 0 };
+            result.push({
+                name: dayStr,
+                total: values[graphMetric]
+            });
+        }
+        return result;
+
+    }
+
+    if (filter === 'today' || filter === 'custom') {
+        const revenue = displaySales.reduce((acc, sale) => acc + sale.sellingPrice * sale.quantity, 0);
+        const profit = displaySales.reduce((acc, sale) => acc + (sale.sellingPrice * sale.quantity - sale.item.originalValue * sale.quantity), 0);
+        const dateLabel = format(customDate || new Date(), 'do MMM');
+        return [{ name: dateLabel, total: graphMetric === 'revenue' ? revenue : profit }];
+    }
+
+    // Default to monthly for 'overall'
+    const monthlyData = Array.from({ length: 12 }, (_, i) => ({
+      name: format(new Date(2000, i, 1), 'MMM'),
+      revenue: 0,
+      profit: 0,
+    }));
+    
+    const today = new Date();
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    oneYearAgo.setDate(today.getDate());
+
+    enrichedSales.forEach(sale => {
+      const saleDate = new Date(sale.date);
+      if (saleDate >= oneYearAgo) {
+        const monthIndex = saleDate.getMonth();
+        const revenue = sale.sellingPrice * sale.quantity;
+        const profit = revenue - (sale.item.originalValue * sale.quantity);
+        monthlyData[monthIndex].revenue += revenue;
+        monthlyData[monthIndex].profit += profit;
+      }
+    });
+
+    return monthlyData.map(d => ({ name: d.name, total: d[graphMetric] }));
+  }, [displaySales, enrichedSales, filter, customDate, graphMetric]);
 
   const getTitlePrefix = () => {
     switch (filter) {
@@ -215,9 +282,15 @@ export default function DashboardPage() {
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>Overview</CardTitle>
+            <Tabs value={graphMetric} onValueChange={(value) => setGraphMetric(value as 'revenue' | 'profit')}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="revenue">Total Sales</TabsTrigger>
+                <TabsTrigger value="profit">Profit</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </CardHeader>
           <CardContent className="pl-2">
-            <Overview data={enrichedSales} />
+            <Overview data={overviewData} metric={graphMetric} />
           </CardContent>
         </Card>
         <Card className="col-span-3">
