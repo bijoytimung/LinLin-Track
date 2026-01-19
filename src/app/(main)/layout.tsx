@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, Package, BarChart2 } from 'lucide-react';
+import { Home, Package, BarChart2, TrendingUp } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +15,7 @@ import { AuthGate } from './_components/auth-gate';
 import { HomeIcon } from '@/components/icons/home';
 import { StockIcon } from '@/components/icons/stock';
 import { ReportsIcon } from '@/components/icons/reports';
+import { RankingIcon } from '@/components/icons/ranking';
 
 export default function MainLayout({
   children,
@@ -54,6 +55,14 @@ export default function MainLayout({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip={{ children: 'Ranking' }}>
+                  <Link href="/ranking">
+                    <TrendingUp />
+                    <span>Ranking</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
         </Sidebar>
@@ -70,6 +79,10 @@ export default function MainLayout({
                 <Link href="/sales" className="flex flex-col items-center p-2 text-foreground hover:text-primary">
                     <ReportsIcon className="h-6 w-6" />
                     <span className="text-xs">Reports</span>
+                </Link>
+                <Link href="/ranking" className="flex flex-col items-center p-2 text-foreground hover:text-primary">
+                    <RankingIcon className="h-6 w-6" />
+                    <span className="text-xs">Ranking</span>
                 </Link>
             </nav>
         </div>
