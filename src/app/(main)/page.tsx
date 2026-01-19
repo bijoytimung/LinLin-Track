@@ -125,7 +125,7 @@ export default function DashboardPage() {
             const dayStr = String(i);
             const values = dailyData[dayStr] || { revenue: 0, profit: 0 };
             result.push({
-                name: dayStr,
+                name: format(new Date(year, month, i), 'MMM d'),
                 total: values[graphMetric]
             });
         }
