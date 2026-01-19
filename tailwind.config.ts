@@ -45,6 +45,18 @@ export default {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
+        gold: {
+          DEFAULT: 'hsl(var(--gold))',
+          foreground: 'hsl(var(--gold-foreground))',
+        },
+        silver: {
+          DEFAULT: 'hsl(var(--silver))',
+          foreground: 'hsl(var(--silver-foreground))',
+        },
+        bronze: {
+          DEFAULT: 'hsl(var(--bronze))',
+          foreground: 'hsl(var(--bronze-foreground))',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

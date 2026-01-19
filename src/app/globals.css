@@ -23,6 +23,12 @@
     --border: 345 20% 85%;
     --input: 345 20% 88%;
     --ring: 345 75% 65%;
+    --gold: 45 86% 59%;
+    --gold-foreground: 45 90% 15%;
+    --silver: 210 17% 78%;
+    --silver-foreground: 210 15% 25%;
+    --bronze: 30 54% 53%;
+    --bronze-foreground: 30 60% 15%;
     --radius: 0.5rem;
     --chart-1: 345 75% 65%;
     --chart-2: 48 89% 80%;
@@ -59,6 +65,12 @@
     --border: 30 20% 25%;
     --input: 30 20% 25%;
     --ring: 345 75% 65%;
+    --gold: 45 70% 50%;
+    --gold-foreground: 45 90% 95%;
+    --silver: 210 10% 50%;
+    --silver-foreground: 210 15% 95%;
+    --bronze: 30 50% 45%;
+    --bronze-foreground: 30 60% 95%;
     --chart-1: 345 75% 65%;
     --chart-2: 48 89% 80%;
     --chart-3: 278 35% 50%;

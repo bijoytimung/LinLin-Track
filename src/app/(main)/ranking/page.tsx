@@ -15,6 +15,7 @@ import { useMemo, useState } from 'react';
 import type { InventoryItem, Sale } from '@/lib/data';
 import { useMemoFirebase } from '@/firebase/provider';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 type RankedItem = {
   id: string;
@@ -114,10 +115,15 @@ export default function RankingPage() {
                 </TableRow>
             )}
             {!isLoading && rankedItems.map((rankedItem, index) => {
+              const rank = index + 1;
               return (
                 <TableRow key={rankedItem.id}>
                   <TableCell>
-                    <Badge variant="secondary" className="text-lg">
+                    <Badge variant={rank > 3 ? 'secondary' : 'outline'} className={cn("text-lg", {
+                        "bg-gold text-gold-foreground border-gold hover:bg-gold/80": rank === 1,
+                        "bg-silver text-silver-foreground border-silver hover:bg-silver/80": rank === 2,
+                        "bg-bronze text-bronze-foreground border-bronze hover:bg-bronze/80": rank === 3,
+                    })}>
                       {index + 1}
                     </Badge>
                   </TableCell>
