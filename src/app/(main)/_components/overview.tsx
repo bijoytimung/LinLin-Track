@@ -43,7 +43,7 @@ export function Overview({ data, metric }: OverviewProps) {
             labelClassName="font-bold"
           />}
         />
-        <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
+        <Bar key={metric} dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ChartContainer>
   );
